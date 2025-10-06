@@ -1,357 +1,208 @@
-"""
-Core Tensor class with automatic differentiation.
+# Create the missing activations.py file with both module classes and functional implementations
+
+activations_content = '''"""
+Activation functions for neural networks.
 """
 
 import numpy as np
-from typing import Union, List, Tuple, Optional, Set
+from abc import ABC, abstractmethod
+from ..tensor import Tensor
 
+class ActivationFunction(ABC):
+    """Base class for activation functions."""
+    
+    @abstractmethod
+    def forward(self, x: Tensor) -> Tensor:
+        pass
+    
+    def __call__(self, x: Tensor) -> Tensor:
+        return self.forward(x)
 
-class Tensor:
-    """Enhanced Tensor class with complete automatic differentiation."""
+class ReLU(ActivationFunction):
+    """Rectified Linear Unit activation function."""
     
-    _tensor_id = 0  # Global tensor ID counter
-    
-    def __init__(
-        self,
-        data: Union[list, tuple, np.ndarray, float, int],
-        requires_grad: bool = False,
-        dtype: type = np.float32
-    ):
-        """Initialize tensor with data and gradient tracking."""
-        # Convert input to numpy array
-        if isinstance(data, (int, float)):
-            self.data = np.array(data, dtype=dtype)
-        else:
-            self.data = np.array(data, dtype=dtype)
-        
-        # Gradient tracking
-        self.requires_grad = requires_grad
-        self.grad = None
-        
-        # Computational graph for backpropagation
-        self._backward = None
-        self.prev: Set['Tensor'] = set()
-        self.op = ""
-        
-        # Metadata
-        self.is_leaf = True
-        self.id = Tensor._tensor_id
-        Tensor._tensor_id += 1
-    
-    def __repr__(self) -> str:
-        """String representation of tensor."""
-        grad_str = f", grad_fn={self.op}" if self.op else ""
-        requires_grad_str = f", requires_grad={self.requires_grad}" if self.requires_grad else ""
-        
-        if self.data.size <= 8:
-            data_str = str(self.data.tolist())
-        else:
-            data_str = f"tensor of shape {self.shape}"
-        
-        return f"Tensor({data_str}{requires_grad_str}{grad_str})"
-    
-    # Properties
-    @property
-    def shape(self) -> tuple:
-        return self.data.shape
-    
-    @property
-    def ndim(self) -> int:
-        return self.data.ndim
-    
-    @property
-    def size(self) -> int:
-        return self.data.size
-    
-    @property
-    def dtype(self) -> np.dtype:
-        return self.data.dtype
-    
-    def _handle_broadcasting(self, grad, original_shape):
-        """Handle gradient broadcasting for operations with different shapes."""
-        # Sum over added dimensions
-        ndims_added = grad.ndim - len(original_shape)
-        for _ in range(ndims_added):
-            grad = grad.sum(axis=0)
-        
-        # Sum over broadcasted dimensions
-        for i, (dim_size, orig_size) in enumerate(zip(grad.shape, original_shape)):
-            if orig_size == 1 and dim_size > 1:
-                grad = grad.sum(axis=i, keepdims=True)
-        
-        return grad
-    
-    def __add__(self, other):
-        """Element-wise addition with gradient support."""
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
-        
-        result_data = self.data + other.data
-        out = Tensor(result_data, requires_grad=(self.requires_grad or other.requires_grad))
-        out.op = "AddBackward"
+    def forward(self, x: Tensor) -> Tensor:
+        result_data = np.maximum(0, x.data)
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = "ReLUBackward"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = self._handle_broadcasting(out.grad, self.shape)
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                grad = out.grad * (x.data > 0).astype(x.data.dtype)
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
-            
-            if other.requires_grad:
-                grad = self._handle_broadcasting(out.grad, other.shape)
-                if other.grad is None:
-                    other.grad = grad
-                else:
-                    other.grad = other.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self, other}
+        out.prev = {x}
         return out
+
+class Sigmoid(ActivationFunction):
+    """Sigmoid activation function."""
     
-    def __mul__(self, other):
-        """Element-wise multiplication with gradient support."""
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+    def forward(self, x: Tensor) -> Tensor:
+        # Numerical stability: clip input to prevent overflow
+        clipped_data = np.clip(x.data, -500, 500)
+        result_data = 1 / (1 + np.exp(-clipped_data))
         
-        result_data = self.data * other.data
-        out = Tensor(result_data, requires_grad=(self.requires_grad or other.requires_grad))
-        out.op = "MulBackward"
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = "SigmoidBackward"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = self._handle_broadcasting(other.data * out.grad, self.shape)
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                sigmoid_grad = result_data * (1 - result_data)
+                grad = out.grad * sigmoid_grad
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
-            
-            if other.requires_grad:
-                grad = self._handle_broadcasting(self.data * out.grad, other.shape)
-                if other.grad is None:
-                    other.grad = grad
-                else:
-                    other.grad = other.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self, other}
+        out.prev = {x}
         return out
+
+class Tanh(ActivationFunction):
+    """Hyperbolic tangent activation function."""
     
-    def matmul(self, other):
-        """Matrix multiplication with proper gradient computation."""
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+    def forward(self, x: Tensor) -> Tensor:
+        result_data = np.tanh(x.data)
         
-        result_data = np.dot(self.data, other.data)
-        out = Tensor(result_data, requires_grad=(self.requires_grad or other.requires_grad))
-        out.op = "MatMulBackward"
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = "TanhBackward"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = np.dot(out.grad, other.data.T)
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                tanh_grad = 1 - result_data**2
+                grad = out.grad * tanh_grad
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
-            
-            if other.requires_grad:
-                grad = np.dot(self.data.T, out.grad)
-                if other.grad is None:
-                    other.grad = grad
-                else:
-                    other.grad = other.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self, other}
+        out.prev = {x}
         return out
+
+class Softmax(ActivationFunction):
+    """Softmax activation function."""
     
-    def __pow__(self, power):
-        """Power operation with gradient support."""
-        assert isinstance(power, (int, float))
+    def __init__(self, dim=-1):
+        self.dim = dim
+    
+    def forward(self, x: Tensor) -> Tensor:
+        # Numerical stability: subtract max
+        x_max = np.max(x.data, axis=self.dim, keepdims=True)
+        exp_data = np.exp(x.data - x_max)
+        sum_exp = np.sum(exp_data, axis=self.dim, keepdims=True)
+        result_data = exp_data / sum_exp
         
-        result_data = np.power(self.data, power)
-        out = Tensor(result_data, requires_grad=self.requires_grad)
-        out.op = f"PowBackward({power})"
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = f"SoftmaxBackward(dim={self.dim})"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = power * np.power(self.data, power - 1) * out.grad
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                # Softmax gradient: s * (grad - sum(s * grad))
+                s_dot_grad = result_data * out.grad
+                sum_s_dot_grad = np.sum(s_dot_grad, axis=self.dim, keepdims=True)
+                grad = result_data * (out.grad - sum_s_dot_grad)
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self}
+        out.prev = {x}
         return out
+
+class GELU(ActivationFunction):
+    """Gaussian Error Linear Unit activation function."""
     
-    def sum(self, axis=None, keepdims=False):
-        """Sum operation with gradient support."""
-        result_data = np.sum(self.data, axis=axis, keepdims=keepdims)
-        out = Tensor(result_data, requires_grad=self.requires_grad)
-        out.op = f"SumBackward(axis={axis})"
+    def forward(self, x: Tensor) -> Tensor:
+        # GELU approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
+        sqrt_2_over_pi = np.sqrt(2 / np.pi)
+        tanh_arg = sqrt_2_over_pi * (x.data + 0.044715 * x.data**3)
+        result_data = 0.5 * x.data * (1 + np.tanh(tanh_arg))
+        
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = "GELUBackward"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = out.grad
-                
-                if axis is not None:
-                    if isinstance(axis, int):
-                        axes = (axis,)
-                    else:
-                        axes = axis
-                    
-                    if not keepdims:
-                        for ax in sorted(axes):
-                            grad = np.expand_dims(grad, ax)
-                
-                grad = np.broadcast_to(grad, self.data.shape)
-                
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                # Approximate GELU derivative
+                tanh_term = np.tanh(tanh_arg)
+                sech2_term = 1 - tanh_term**2
+                grad_term = 0.5 * (1 + tanh_term) + 0.5 * x.data * sech2_term * sqrt_2_over_pi * (1 + 3 * 0.044715 * x.data**2)
+                grad = out.grad * grad_term
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self}
+        out.prev = {x}
         return out
+
+class LeakyReLU(ActivationFunction):
+    """Leaky ReLU activation function."""
     
-    def mean(self, axis=None, keepdims=False):
-        """Mean operation with gradient support."""
-        if axis is None:
-            n = self.data.size
-        else:
-            if isinstance(axis, int):
-                n = self.data.shape[axis]
-            else:
-                n = np.prod([self.data.shape[i] for i in axis])
-        
-        return self.sum(axis=axis, keepdims=keepdims) / n
+    def __init__(self, negative_slope=0.01):
+        self.negative_slope = negative_slope
     
-    def reshape(self, shape):
-        """Reshape operation with gradient support."""
-        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
-            shape = shape[0]
+    def forward(self, x: Tensor) -> Tensor:
+        result_data = np.where(x.data > 0, x.data, self.negative_slope * x.data)
         
-        result_data = self.data.reshape(shape)
-        out = Tensor(result_data, requires_grad=self.requires_grad)
-        out.op = f"ReshapeBackward({shape})"
+        out = Tensor(result_data, requires_grad=x.requires_grad)
+        out.op = f"LeakyReLUBackward(negative_slope={self.negative_slope})"
         out.is_leaf = False
         
         def _backward():
-            if self.requires_grad:
-                grad = out.grad.reshape(self.data.shape)
-                if self.grad is None:
-                    self.grad = grad
+            if x.requires_grad and out.grad is not None:
+                grad = out.grad * np.where(x.data > 0, 1.0, self.negative_slope)
+                if x.grad is None:
+                    x.grad = grad
                 else:
-                    self.grad = self.grad + grad
+                    x.grad = x.grad + grad
         
         out._backward = _backward
-        out.prev = {self}
+        out.prev = {x}
         return out
-    
-    def transpose(self, axes=None):
-        """Transpose tensor dimensions."""
-        result_data = np.transpose(self.data, axes)
-        out = Tensor(result_data, requires_grad=self.requires_grad)
-        out.op = "TransposeBackward"
-        out.is_leaf = False
-        
-        def _backward():
-            if self.requires_grad:
-                # Reverse the transpose for gradient
-                if axes:
-                    # Create reverse permutation
-                    reverse_axes = [0] * len(axes)
-                    for i, ax in enumerate(axes):
-                        reverse_axes[ax] = i
-                    grad = np.transpose(out.grad, reverse_axes)
-                else:
-                    grad = np.transpose(out.grad)
-                
-                if self.grad is None:
-                    self.grad = grad
-                else:
-                    self.grad = self.grad + grad
-        
-        out._backward = _backward
-        out.prev = {self}
-        return out
-    
-    def backward(self, gradient=None):
-        """Enhanced backpropagation with cycle detection."""
-        if gradient is None:
-            if self.data.size == 1:
-                gradient = np.ones_like(self.data)
-            else:
-                raise RuntimeError("gradient can only be implicitly created for scalar outputs")
-        
-        self.grad = gradient
-        
-        # Topological sort with cycle detection
-        topo_order = []
-        visited = set()
-        rec_stack = set()
-        
-        def build_topo(node):
-            if node.id in rec_stack:
-                raise RuntimeError("Cycle detected in computational graph")
-            
-            if node.id not in visited:
-                visited.add(node.id)
-                rec_stack.add(node.id)
-                
-                for child in node.prev:
-                    build_topo(child)
-                
-                rec_stack.remove(node.id)
-                topo_order.append(node)
-        
-        build_topo(self)
-        
-        # Apply chain rule
-        for node in reversed(topo_order):
-            if node._backward:
-                node._backward()
-    
-    def zero_grad(self):
-        """Zero the gradient."""
-        self.grad = None
-    
-    def detach(self):
-        """Detach from computational graph."""
-        return Tensor(self.data.copy(), requires_grad=False)
-    
-    def numpy(self):
-        """Convert to numpy array."""
-        return self.data.copy()
-    
-    def item(self):
-        """Get scalar value."""
-        if self.data.size != 1:
-            raise ValueError("item() can only be called on single-element tensors")
-        return self.data.item()
-    
-    # Convenience methods
-    def __neg__(self):
-        return self * Tensor(-1.0)
-    
-    def __sub__(self, other):
-        return self + (-other if isinstance(other, Tensor) else Tensor(-other))
-    
-    def __truediv__(self, other):
-        if isinstance(other, Tensor):
-            return self * (other ** -1)
-        else:
-            return self * (1.0 / other)
-    
-    def __radd__(self, other):
-        return Tensor(other) + self
-    
-    def __rmul__(self, other):
-        return Tensor(other) * self
+
+# Functional interface
+def relu(x: Tensor) -> Tensor:
+    """Apply ReLU activation function."""
+    return ReLU()(x)
+
+def sigmoid(x: Tensor) -> Tensor:
+    """Apply Sigmoid activation function."""
+    return Sigmoid()(x)
+
+def tanh(x: Tensor) -> Tensor:
+    """Apply Tanh activation function."""
+    return Tanh()(x)
+
+def softmax(x: Tensor, dim=-1) -> Tensor:
+    """Apply Softmax activation function."""
+    return Softmax(dim)(x)
+
+def gelu(x: Tensor) -> Tensor:
+    """Apply GELU activation function."""
+    return GELU()(x)
+
+def leaky_relu(x: Tensor, negative_slope=0.01) -> Tensor:
+    """Apply Leaky ReLU activation function."""
+    return LeakyReLU(negative_slope)(x)
+
+__all__ = [
+    'ActivationFunction', 'ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'GELU', 'LeakyReLU',
+    'relu', 'sigmoid', 'tanh', 'softmax', 'gelu', 'leaky_relu'
+]
+'''
+
+print("✓ Created complete activations.py with both module classes and functional interfaces")
+print("Length:", len(activations_content), "characters")
