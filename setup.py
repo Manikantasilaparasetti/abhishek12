@@ -36,12 +36,12 @@ def read_requirements():
 setup(
     name="mayini-framework",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Abhishek Adari",
+    author_email="abhishekadari85@gmail.com",
     description="A comprehensive deep learning framework with Tensor operations, ANN, CNN, and RNN implementations",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/mayini-framework",
+    url="https://github.com/907-bot-collab/mayini",  # ✅ Fixed URL
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
@@ -82,14 +82,10 @@ setup(
             "notebook>=6.4",
         ],
     },
-    entry_points={
-        "console_scripts": [
-            "mayini-info=mayini.cli:info",
-        ],
-    },
+    # Remove entry_points since cli.py doesn't exist
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/mayini-framework/issues",
-        "Source": "https://github.com/yourusername/mayini-framework",
+        "Bug Reports": "https://github.com/907-bot-collab/mayini/issues",  # ✅ Fixed URL
+        "Source": "https://github.com/907-bot-collab/mayini",  # ✅ Fixed URL
         "Documentation": "https://mayini-framework.readthedocs.io/",
     },
     keywords="deep-learning machine-learning neural-networks tensor pytorch-like framework",
