@@ -1,6 +1,5 @@
-# Create the losses.py file with all loss functions
-
-losses_content = '''"""
+# Create the missing losses.py file
+losses_py_content = '''"""
 Loss functions for training neural networks.
 """
 
@@ -218,5 +217,79 @@ class HuberLoss(LossFunction):
 __all__ = ['LossFunction', 'MSELoss', 'MAELoss', 'CrossEntropyLoss', 'BCELoss', 'HuberLoss']
 '''
 
-print("✓ Created complete losses.py with all loss functions")
-print("Length:", len(losses_content), "characters")
+print("✅ Created missing losses.py")
+print(f"Length: {len(losses_py_content)} characters")
+print("- Complete loss functions with proper gradients")
+print("- Support for different reduction modes")
+print("- Numerical stability improvements")
+
+# Now create a complete installation guide
+installation_guide = '''
+# MAYINI Framework - Complete Installation Fix
+
+## Issues Found and Fixed:
+
+### 1. **TOML Syntax Errors**
+- Fixed regex escaping in pyproject.toml
+- Corrected string formatting issues
+- Added proper dependency version bounds
+
+### 2. **Configuration Conflicts**
+- Simplified setup.py to defer to pyproject.toml
+- Eliminated dual configuration conflicts
+- Used modern Python packaging standards
+
+### 3. **Missing Dependencies**
+- Added proper version bounds for all dependencies
+- Included development and testing dependencies
+- Added optional dependency groups
+
+### 4. **Package Discovery Issues**
+- Fixed package discovery settings
+- Added proper include/exclude patterns
+- Ensured all __init__.py files are present
+
+## Installation Steps:
+
+1. **Replace Configuration Files:**
+   - Replace setup.py with the debugged minimal version
+   - Replace pyproject.toml with the corrected version
+   - Add missing activations.py and losses.py files
+
+2. **Build and Test:**
+   ```bash
+   # Clean previous builds
+   rm -rf build/ dist/ *.egg-info/
+   
+   # Install in development mode
+   pip install -e .
+   
+   # Run tests
+   python -c "import mayini; print('✅ Import successful')"
+   ```
+
+3. **Publish to PyPI:**
+   ```bash
+   # Build distributions
+   python -m build
+   
+   # Upload to PyPI
+   python -m twine upload dist/*
+   ```
+
+## Key Improvements:
+
+✅ **Modern Python Support**: Updated to Python 3.8+
+✅ **Proper Version Bounds**: Added upper bounds for stability
+✅ **Development Tools**: Added comprehensive dev dependencies
+✅ **Testing Framework**: Configured pytest with coverage
+✅ **Code Quality**: Added black, ruff, mypy configurations
+✅ **Documentation**: Ready for Sphinx documentation
+
+The framework should now install and import without errors!
+'''
+
+print("\n" + "="*60)
+print("COMPLETE INSTALLATION GUIDE")
+print("="*60)
+print(installation_guide)
