@@ -79,9 +79,9 @@ examples = [
 Homepage = "https://github.com/907-bot-collab/mayini"
 Documentation = "https://mayini-framework.readthedocs.io/"
 Repository = "https://github.com/907-bot-collab/mayini"
-"Bug Tracker" = "https://github.com/907-bot-collab/mayini/issues"
-"Changelog" = "https://github.com/907-bot-collab/mayini/blob/main/CHANGELOG.md"
-"Discussions" = "https://github.com/907-bot-collab/mayini/discussions"
+Bug_Tracker = "https://github.com/907-bot-collab/mayini/issues"
+Changelog = "https://github.com/907-bot-collab/mayini/blob/main/CHANGELOG.md"
+Discussions = "https://github.com/907-bot-collab/mayini/discussions"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
