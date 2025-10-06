@@ -196,9 +196,5 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
-'''
 
-print("✓ Created corrected setup.py")
-print("✓ Created corrected pyproject.toml")
-print(f"Setup.py length: {len(corrected_setup_py)} characters")
-print(f"Pyproject.toml length: {len(corrected_pyproject_toml)} characters")
+
