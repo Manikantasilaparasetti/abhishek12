@@ -63,14 +63,16 @@ examples = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/mayini-framework"
+Homepage = "https://github.com/907-bot-collab/mayini"
 Documentation = "https://mayini-framework.readthedocs.io/"
-Repository = "https://github.com/yourusername/mayini-framework"
-"Bug Tracker" = "https://github.com/yourusername/mayini-framework/issues"
-Changelog = "https://github.com/yourusername/mayini-framework/blob/main/CHANGELOG.md"
+Repository = "https://github.com/907-bot-collab/mayini"
+"Bug Tracker" = "https://github.com/907-bot-collab/mayini/issues"
+Changelog = "https://github.com/907-bot-collab/mayini/blob/main/CHANGELOG.md"
 
-[project.scripts]
-mayini-info = "mayini.cli:info"
+# Remove the cli script reference
+# [project.scripts]
+# mayini-info = "mayini.cli:info"  # Remove this line
+
 
 [tool.setuptools]
 package-dir = {"" = "src"}
