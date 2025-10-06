@@ -1,245 +1,222 @@
-"""
+# Create the losses.py file with all loss functions
+
+losses_content = '''"""
 Loss functions for training neural networks.
 """
 
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Union
 from ..tensor import Tensor
-from .modules import Module
 
-
-class LossFunction(Module):
-    """Base class for all loss functions."""
+class LossFunction(ABC):
+    """Base class for loss functions."""
     
-    def __init__(self, reduction: str = "mean"):
-        super().__init__()
-        if reduction not in ["mean", "sum", "none"]:
-            raise ValueError(f"Invalid reduction '{reduction}'. Choose from 'mean', 'sum', 'none'")
+    def __init__(self, reduction='mean'):
+        """
+        Initialize loss function.
+        
+        Args:
+            reduction (str): Reduction type - 'mean', 'sum', or 'none'
+        """
+        if reduction not in ['mean', 'sum', 'none']:
+            raise ValueError(f"Invalid reduction '{reduction}'. Must be 'mean', 'sum', or 'none'")
         self.reduction = reduction
     
     @abstractmethod
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        """Compute loss between predictions and targets."""
         pass
     
-    def apply_reduction(self, loss: Tensor) -> Tensor:
+    def __call__(self, predictions: Tensor, targets: Tensor) -> Tensor:
+        return self.forward(predictions, targets)
+    
+    def _apply_reduction(self, loss_tensor: Tensor) -> Tensor:
         """Apply reduction to loss tensor."""
-        if self.reduction == "mean":
-            return loss.mean()
-        elif self.reduction == "sum":
-            return loss.sum()
-        else:  # none
-            return loss
-
+        if self.reduction == 'mean':
+            return loss_tensor.mean()
+        elif self.reduction == 'sum':
+            return loss_tensor.sum()
+        else:  # 'none'
+            return loss_tensor
 
 class MSELoss(LossFunction):
-    """Mean Squared Error Loss for regression tasks."""
+    """Mean Squared Error Loss."""
     
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
+        if not isinstance(targets, Tensor):
+            targets = Tensor(targets)
+        
         diff = predictions - targets
-        squared_diff = diff * diff
-        return self.apply_reduction(squared_diff)
-    
-    def __repr__(self):
-        return f"MSELoss(reduction={self.reduction})"
-
+        loss = diff * diff
+        return self._apply_reduction(loss)
 
 class MAELoss(LossFunction):
-    """Mean Absolute Error Loss for regression tasks."""
+    """Mean Absolute Error Loss."""
     
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
+        if not isinstance(targets, Tensor):
+            targets = Tensor(targets)
+        
         diff = predictions - targets
+        # Implement absolute value with gradient
         abs_diff_data = np.abs(diff.data)
-        abs_diff = Tensor(abs_diff_data, requires_grad=(predictions.requires_grad or targets.requires_grad))
+        out = Tensor(abs_diff_data, requires_grad=diff.requires_grad)
+        out.op = "AbsBackward"
+        out.is_leaf = False
         
-        # Handle gradient computation for absolute value
-        if predictions.requires_grad or targets.requires_grad:
-            abs_diff.op = "AbsBackward"
-            abs_diff.is_leaf = False
-            
-            def _backward():
-                grad = np.sign(diff.data) * abs_diff.grad
-                
-                if predictions.requires_grad:
-                    if predictions.grad is None:
-                        predictions.grad = grad
-                    else:
-                        predictions.grad = predictions.grad + grad
-                
-                if targets.requires_grad:
-                    if targets.grad is None:
-                        targets.grad = -grad
-                    else:
-                        targets.grad = targets.grad - grad
-            
-            abs_diff._backward = _backward
-            abs_diff.prev = {predictions, targets}
+        def _backward():
+            if diff.requires_grad and out.grad is not None:
+                sign_grad = np.sign(diff.data)
+                grad = out.grad * sign_grad
+                if diff.grad is None:
+                    diff.grad = grad
+                else:
+                    diff.grad = diff.grad + grad
         
-        return self.apply_reduction(abs_diff)
-    
-    def __repr__(self):
-        return f"MAELoss(reduction={self.reduction})"
-
+        out._backward = _backward
+        out.prev = {diff}
+        
+        return self._apply_reduction(out)
 
 class CrossEntropyLoss(LossFunction):
-    """Cross-Entropy Loss for multi-class classification."""
-    
-    def __init__(self, reduction: str = "mean", ignore_index: int = -100):
-        super().__init__(reduction)
-        self.ignore_index = ignore_index
+    """Cross Entropy Loss for classification."""
     
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        # Apply log-softmax for numerical stability
-        log_probs = self._log_softmax(predictions)
+        if not isinstance(targets, Tensor):
+            targets = Tensor(targets)
         
-        # Convert targets to integers if needed
-        if targets.dtype != np.int64:
-            targets_int = targets.data.astype(np.int64)
-        else:
-            targets_int = targets.data
+        # Apply softmax to predictions for numerical stability
+        pred_max = np.max(predictions.data, axis=1, keepdims=True)
+        exp_pred = np.exp(predictions.data - pred_max)
+        sum_exp = np.sum(exp_pred, axis=1, keepdims=True)
+        log_softmax = (predictions.data - pred_max) - np.log(sum_exp)
         
-        # Compute negative log-likelihood
-        batch_size = predictions.shape[0]
-        loss_data = np.zeros(batch_size, dtype=np.float32)
+        # Compute cross entropy
+        if targets.data.ndim == 1:  # Class indices
+            batch_size = predictions.data.shape[0]
+            loss_data = -log_softmax[np.arange(batch_size), targets.data.astype(int)]
+        else:  # One-hot encoded
+            loss_data = -np.sum(targets.data * log_softmax, axis=1)
         
-        for i in range(batch_size):
-            target_class = targets_int[i]
-            if target_class != self.ignore_index:
-                loss_data[i] = -log_probs.data[i, target_class]
-        
-        loss = Tensor(loss_data, requires_grad=predictions.requires_grad)
-        loss.op = "CrossEntropyLossBackward"
-        loss.is_leaf = False
+        out = Tensor(loss_data, requires_grad=predictions.requires_grad)
+        out.op = "CrossEntropyBackward"
+        out.is_leaf = False
         
         def _backward():
-            if predictions.requires_grad:
-                grad = np.zeros_like(predictions.data)
+            if predictions.requires_grad and out.grad is not None:
+                batch_size = predictions.data.shape[0]
+                softmax_pred = exp_pred / sum_exp
                 
-                for i in range(batch_size):
-                    target_class = targets_int[i]
-                    if target_class != self.ignore_index:
-                        # Gradient of cross-entropy w.r.t. logits
-                        probs = np.exp(log_probs.data[i])
-                        grad[i] = probs * loss.grad[i]
-                        grad[i, target_class] -= loss.grad[i]
+                if targets.data.ndim == 1:  # Class indices
+                    grad = softmax_pred.copy()
+                    grad[np.arange(batch_size), targets.data.astype(int)] -= 1
+                else:  # One-hot encoded
+                    grad = softmax_pred - targets.data
                 
-                if self.reduction == "mean":
-                    # Count valid samples for averaging
-                    valid_samples = np.sum(targets_int != self.ignore_index)
-                    if valid_samples > 0:
-                        grad = grad / valid_samples
-                elif self.reduction == "sum":
-                    pass  # No additional scaling needed
+                # Apply chain rule
+                if out.grad.ndim == 0:
+                    grad = grad * out.grad
+                else:
+                    grad = grad * out.grad.reshape(-1, 1)
                 
                 if predictions.grad is None:
                     predictions.grad = grad
                 else:
                     predictions.grad = predictions.grad + grad
         
-        loss._backward = _backward
-        loss.prev = {predictions}
+        out._backward = _backward
+        out.prev = {predictions}
         
-        return self.apply_reduction(loss)
-    
-    def _log_softmax(self, x: Tensor) -> Tensor:
-        """Numerically stable log-softmax."""
-        x_max = np.max(x.data, axis=1, keepdims=True)
-        shifted = x.data - x_max
-        log_sum_exp = np.log(np.sum(np.exp(shifted), axis=1, keepdims=True))
-        log_probs_data = shifted - log_sum_exp
-        
-        return Tensor(log_probs_data, requires_grad=x.requires_grad)
-    
-    def __repr__(self):
-        return f"CrossEntropyLoss(reduction={self.reduction}, ignore_index={self.ignore_index})"
-
+        return self._apply_reduction(out)
 
 class BCELoss(LossFunction):
-    """Binary Cross-Entropy Loss for binary classification."""
+    """Binary Cross Entropy Loss."""
     
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        # Clamp predictions to prevent log(0)
-        eps = 1e-8
-        predictions_clamped = np.clip(predictions.data, eps, 1 - eps)
+        if not isinstance(targets, Tensor):
+            targets = Tensor(targets)
         
-        # Compute BCE: -[y*log(p) + (1-y)*log(1-p)]
-        log_p = np.log(predictions_clamped)
-        log_1_minus_p = np.log(1 - predictions_clamped)
+        # Clamp predictions for numerical stability
+        eps = 1e-7
+        pred_clamped = np.clip(predictions.data, eps, 1 - eps)
         
-        bce_data = -(targets.data * log_p + (1 - targets.data) * log_1_minus_p)
-        bce = Tensor(bce_data, requires_grad=predictions.requires_grad)
-        bce.op = "BCELossBackward"
-        bce.is_leaf = False
+        loss_data = -(targets.data * np.log(pred_clamped) + 
+                     (1 - targets.data) * np.log(1 - pred_clamped))
+        
+        out = Tensor(loss_data, requires_grad=predictions.requires_grad)
+        out.op = "BCEBackward"
+        out.is_leaf = False
         
         def _backward():
-            if predictions.requires_grad:
-                # Gradient of BCE w.r.t. predictions
-                grad = -(targets.data / predictions_clamped - 
-                        (1 - targets.data) / (1 - predictions_clamped)) * bce.grad
+            if predictions.requires_grad and out.grad is not None:
+                # BCE gradient: (pred - target) / (pred * (1 - pred))
+                grad = (pred_clamped - targets.data) / (pred_clamped * (1 - pred_clamped))
+                
+                if out.grad.ndim == 0:
+                    grad = grad * out.grad
+                else:
+                    grad = grad * out.grad
                 
                 if predictions.grad is None:
                     predictions.grad = grad
                 else:
                     predictions.grad = predictions.grad + grad
         
-        bce._backward = _backward
-        bce.prev = {predictions}
+        out._backward = _backward
+        out.prev = {predictions}
         
-        return self.apply_reduction(bce)
-    
-    def __repr__(self):
-        return f"BCELoss(reduction={self.reduction})"
-
+        return self._apply_reduction(out)
 
 class HuberLoss(LossFunction):
-    """Huber Loss for robust regression (less sensitive to outliers)."""
+    """Huber Loss (smooth L1 loss)."""
     
-    def __init__(self, reduction: str = "mean", delta: float = 1.0):
+    def __init__(self, delta=1.0, reduction='mean'):
         super().__init__(reduction)
         self.delta = delta
     
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
+        if not isinstance(targets, Tensor):
+            targets = Tensor(targets)
+        
         diff = predictions - targets
         abs_diff = np.abs(diff.data)
         
         # Huber loss: 0.5 * diff^2 if |diff| <= delta, else delta * (|diff| - 0.5 * delta)
-        is_small = abs_diff <= self.delta
-        huber_data = np.where(
-            is_small,
-            0.5 * diff.data ** 2,
+        loss_data = np.where(
+            abs_diff <= self.delta,
+            0.5 * diff.data**2,
             self.delta * (abs_diff - 0.5 * self.delta)
         )
         
-        huber = Tensor(huber_data, requires_grad=(predictions.requires_grad or targets.requires_grad))
-        huber.op = f"HuberLossBackward(delta={self.delta})"
-        huber.is_leaf = False
+        out = Tensor(loss_data, requires_grad=diff.requires_grad)
+        out.op = f"HuberBackward(delta={self.delta})"
+        out.is_leaf = False
         
         def _backward():
-            if predictions.requires_grad or targets.requires_grad:
-                # Gradient of Huber loss
+            if diff.requires_grad and out.grad is not None:
+                # Huber gradient: diff if |diff| <= delta, else delta * sign(diff)
                 grad = np.where(
-                    is_small,
-                    diff.data,  # For |diff| <= delta: gradient is diff
-                    self.delta * np.sign(diff.data)  # For |diff| > delta: gradient is delta * sign(diff)
-                ) * huber.grad
+                    abs_diff <= self.delta,
+                    diff.data,
+                    self.delta * np.sign(diff.data)
+                )
                 
-                if predictions.requires_grad:
-                    if predictions.grad is None:
-                        predictions.grad = grad
-                    else:
-                        predictions.grad = predictions.grad + grad
+                if out.grad.ndim == 0:
+                    grad = grad * out.grad
+                else:
+                    grad = grad * out.grad
                 
-                if targets.requires_grad:
-                    if targets.grad is None:
-                        targets.grad = -grad
-                    else:
-                        targets.grad = targets.grad - grad
+                if diff.grad is None:
+                    diff.grad = grad
+                else:
+                    diff.grad = diff.grad + grad
         
-        huber._backward = _backward
-        huber.prev = {predictions, targets}
+        out._backward = _backward
+        out.prev = {diff}
         
-        return self.apply_reduction(huber)
-    
-    def __repr__(self):
-        return f"HuberLoss(reduction={self.reduction}, delta={self.delta})"
+        return self._apply_reduction(out)
+
+__all__ = ['LossFunction', 'MSELoss', 'MAELoss', 'CrossEntropyLoss', 'BCELoss', 'HuberLoss']
+'''
+
+print("✓ Created complete losses.py with all loss functions")
+print("Length:", len(losses_content), "characters")
