@@ -1,5 +1,4 @@
-# Create the corrected pyproject.toml file
-corrected_pyproject_toml = '''[build-system]
+[build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -57,7 +56,8 @@ dev = [
     "black>=23.0,<25.0",
     "flake8>=5.0,<7.0",
     "mypy>=1.0,<2.0",
-    "pre-commit>=3.0,<4.0"
+    "pre-commit>=3.0,<4.0",
+    "pytest-xdist>=3.0,<4.0"  # Moved from 'test' to avoid overlap
 ]
 docs = [
     "sphinx>=5.0,<8.0",
@@ -68,7 +68,7 @@ test = [
     "pytest>=7.0,<8.0",
     "pytest-cov>=4.0,<5.0",
     "pytest-xdist>=3.0,<4.0"
-]
+]  # Kept as subset of 'dev' for explicit testing installs
 examples = [
     "jupyter>=1.0,<2.0",
     "notebook>=6.4,<8.0",  
@@ -79,9 +79,9 @@ examples = [
 Homepage = "https://github.com/907-bot-collab/mayini"
 Documentation = "https://mayini-framework.readthedocs.io/"
 Repository = "https://github.com/907-bot-collab/mayini"
-Bug_Tracker = "https://github.com/907-bot-collab/mayini/issues"
-Changelog = "https://github.com/907-bot-collab/mayini/blob/main/CHANGELOG.md"
-Discussions = "https://github.com/907-bot-collab/mayini/discussions"
+"Bug Tracker" = "https://github.com/907-bot-collab/mayini/issues"
+"Changelog" = "https://github.com/907-bot-collab/mayini/blob/main/CHANGELOG.md"
+"Discussions" = "https://github.com/907-bot-collab/mayini/discussions"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -117,7 +117,7 @@ profile = "black"
 multi_line_output = 3
 line_length = 88
 known_first_party = ["mayini"]
-known_third_party = ["numpy", "matplotlib", "seaborn", "sklearn", "tqdm"]
+known_third_party = ["numpy", "matplotlib", "seaborn", "scikit-learn", "sklearn", "tqdm"]  # Added "scikit-learn" for completeness
 
 [tool.mypy]
 python_version = "3.8"
@@ -183,16 +183,16 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
     "if 0:",
-    "if __name__ == .__main__.:",
+    "if __name__ == '__main__':",  # Fixed: Removed extraneous dot and colon
     "if TYPE_CHECKING:",
-    "class .*\\(.*Protocol.*\\):",
+    "class .*\\$.*Protocol.*\\$:",
     "@(abc\\.)?abstractmethod"
 ]
 show_missing = true
 precision = 2
 
 [tool.ruff]
-target-version = "py38"
+target-version = ["py38"]  # Changed to list for consistency with other tools
 line-length = 88
 select = [
     "E",  # pycodestyle errors
@@ -212,5 +212,3 @@ ignore = [
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = ["B018", "B011", "B017"]
-'''
-
