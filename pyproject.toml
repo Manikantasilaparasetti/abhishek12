@@ -214,11 +214,3 @@ ignore = [
 "tests/*" = ["B018", "B011", "B017"]
 '''
 
-print("✅ CORRECTED pyproject.toml created")
-print(f"Length: {len(corrected_pyproject_toml)} characters")
-print("- Fixed regex escaping issues")
-print("- Added proper version bounds for dependencies")
-print("- Added comprehensive tool configurations")
-print("- Updated to modern Python versions (3.8+)")
-print("- Added better package discovery settings")
-print("- Removed all debug code and print statements")
