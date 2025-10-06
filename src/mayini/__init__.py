@@ -1,9 +1,10 @@
-"""
+# Create the corrected main __init__.py file
+main_init_content = '''"""
 MAYINI Deep Learning Framework
 A comprehensive deep learning framework built from scratch in Python.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"  # Fixed version instead of dynamic
 __author__ = "Abhishek Adari"
 __email__ = "abhishekadari85@gmail.com"
 
@@ -13,7 +14,7 @@ from .tensor import Tensor
 # Neural network modules
 from .nn import (
     Module, Sequential,
-    Linear, Conv2D, MaxPool2D, AvgPool2D, Dropout, BatchNorm1d,
+    Linear, Conv2D, MaxPool2D, AvgPool2D, Dropout, BatchNorm1d, Flatten,
     ReLU, Sigmoid, Tanh, Softmax, GELU, LeakyReLU,
     RNNCell, LSTMCell, GRUCell, RNN,
     MSELoss, MAELoss, CrossEntropyLoss, BCELoss, HuberLoss
@@ -22,7 +23,7 @@ from .nn import (
 # Optimizers
 from .optim import SGD, Adam, AdamW, RMSprop
 
-# Training utilities  
+# Training utilities   
 from .training import DataLoader, Trainer, Metrics, EarlyStopping
 
 # Activation functions (functional interface)
@@ -36,7 +37,7 @@ __all__ = [
     'Module', 'Sequential',
     
     # Layers
-    'Linear', 'Conv2D', 'MaxPool2D', 'AvgPool2D', 'Dropout', 'BatchNorm1d',
+    'Linear', 'Conv2D', 'MaxPool2D', 'AvgPool2D', 'Dropout', 'BatchNorm1d', 'Flatten',
     
     # Activations (modules)
     'ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'GELU', 'LeakyReLU',
@@ -56,3 +57,7 @@ __all__ = [
     # Training
     'DataLoader', 'Trainer', 'Metrics', 'EarlyStopping'
 ]
+'''
+
+print("✓ Created corrected main __init__.py")
+print("Length:", len(main_init_content), "characters")
