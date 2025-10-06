@@ -1,10 +1,10 @@
 # Create the corrected main __init__.py file
-main_init_content = '''"""
+corrected_main_init = '''"""
 MAYINI Deep Learning Framework
 A comprehensive deep learning framework built from scratch in Python.
 """
 
-__version__ = "0.1.1"  # Fixed version instead of dynamic
+__version__ = "0.1.3"
 __author__ = "Abhishek Adari"
 __email__ = "abhishekadari85@gmail.com"
 
@@ -23,7 +23,7 @@ from .nn import (
 # Optimizers
 from .optim import SGD, Adam, AdamW, RMSprop
 
-# Training utilities   
+# Training utilities 
 from .training import DataLoader, Trainer, Metrics, EarlyStopping
 
 # Activation functions (functional interface)
@@ -59,5 +59,9 @@ __all__ = [
 ]
 '''
 
-print("✓ Created corrected main __init__.py")
-print("Length:", len(main_init_content), "characters")
+print("✅ CORRECTED main __init__.py created")
+print(f"Length: {len(corrected_main_init)} characters")
+print("- Removed all debug code and print statements")
+print("- Contains proper imports and package initialization")
+print("- Fixed version string")
+print("- Proper __all__ definition")
