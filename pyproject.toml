@@ -1,38 +1,13 @@
-# Create an ultra-minimal pyproject.toml with only essential packaging info
-minimal_pyproject_toml = '''[build-system]
+# Create the most basic pyproject.toml possible - no optional sections
+basic_pyproject = '''[build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mayini-framework"
 version = "0.1.3"
-description = "A comprehensive deep learning framework with Tensor operations, ANN, CNN, and RNN implementations"
-readme = "README.md"
-license = {file = "LICENSE"}
-authors = [
-    {name = "Abhishek Adari", email = "abhishekadari85@gmail.com"}
-]
-keywords = [
-    "deep-learning", 
-    "machine-learning", 
-    "neural-networks", 
-    "tensor", 
-    "pytorch-like", 
-    "framework"
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence"
-]
+description = "A comprehensive deep learning framework"
+authors = [{name = "Abhishek Adari", email = "abhishekadari85@gmail.com"}]
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.21.0",
@@ -42,46 +17,25 @@ dependencies = [
     "scikit-learn>=1.1.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "black>=23.0",
-    "flake8>=5.0"
-]
-
-[project.urls]
-Homepage = "https://github.com/907-bot-collab/mayini"
-Repository = "https://github.com/907-bot-collab/mayini"
-
 [tool.setuptools]
 package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["mayini*"]
+packages = ["mayini", "mayini.nn", "mayini.optim", "mayini.training"]
 '''
 
-print("✅ ULTRA-MINIMAL pyproject.toml created!")
-print(f"📏 Length: {len(minimal_pyproject_toml)} characters")
-print("📝 Line count:", len(minimal_pyproject_toml.split('\n')))
+print("✅ ULTRA-BASIC pyproject.toml created!")
+print(f"📏 Length: {len(basic_pyproject)} characters")
+print(f"📝 Lines: {len(basic_pyproject.split(chr(10)))}")
 
-# Count lines to see what's at different positions
-lines = minimal_pyproject_toml.split('\n')
-for i, line in enumerate(lines):
-    if i > 45 and i < 55:  # Show lines around where errors might occur
-        print(f"Line {i+1}: {line}")
+# Show each line with numbers
+lines = basic_pyproject.split('\n')
+for i, line in enumerate(lines, 1):
+    print(f"Line {i:2d}: {line}")
 
-print("\n🎯 REMOVED ALL POTENTIAL PROBLEM SOURCES:")
-print("1. ✅ Removed ALL tool configurations except setuptools")
-print("2. ✅ Simplified dependencies (no version upper bounds)")
-print("3. ✅ Minimal optional dependencies")
-print("4. ✅ No pytest, mypy, coverage configurations")
-print("5. ✅ No complex strings or patterns")
-print("6. ✅ Only essential packaging information")
-
-print("\n📋 This minimal version should:")
-print("• ✅ Parse without any TOML syntax errors")
-print("• ✅ Build your package successfully") 
-print("• ✅ Publish to PyPI without issues")
-print("• ✅ Allow basic pytest usage (no config needed)")
+print("\n🎯 REMOVED EVERYTHING COMPLEX:")
+print("1. ✅ No optional-dependencies section")
+print("2. ✅ No project.urls section") 
+print("3. ✅ No setuptools.packages.find section")
+print("4. ✅ Explicit package list instead of discovery")
+print("5. ✅ Single-line author format")
+print("6. ✅ No keywords or classifiers")
+print("7. ✅ Absolute minimum required by PyPI")
