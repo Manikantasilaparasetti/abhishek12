@@ -1,39 +1,44 @@
-# Create the most basic pyproject.toml possible - no optional sections
-basic_pyproject = '''[build-system]
+[build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mayini-framework"
-version = "0.1.3"
-description = "A comprehensive deep learning framework"
-authors = [{name = "Abhishek Adari", email = "abhishekadari85@gmail.com"}]
+name = "mayini-framework"          # The name on PyPI
+version = "0.1.0"                  # Update this for each release
+description = "A deep learning framework built from scratch"
+readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    "numpy>=1.21.0",
-    "matplotlib>=3.5.0",
-    "seaborn>=0.11.0",
-    "tqdm>=4.64.0",
-    "scikit-learn>=1.1.0"
+license = { text = "MIT" }
+authors = [
+    { name = "Abhishek Adari", email = "abhishekadari85@gmail.com" }
 ]
+keywords = ["deep-learning", "neural-networks", "machine-learning", "framework"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+dependencies = [
+    "numpy>=1.21",
+    "scipy>=1.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/907-bot-collab/mayini"
+Repository = "https://github.com/907-bot-collab/mayini"
+Issues = "https://github.com/907-bot-collab/mayini/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["mayini", "mayini.nn", "mayini.optim", "mayini.training"]
-'''
 
-
-
-# Show each line with numbers
-lines = basic_pyproject.split('\n')
-for i, line in enumerate(lines, 1):
-    print(f"Line {i:2d}: {line}")
-
-print("\n🎯 REMOVED EVERYTHING COMPLEX:")
-print("1. ✅ No optional-dependencies section")
-print("2. ✅ No project.urls section") 
-print("3. ✅ No setuptools.packages.find section")
-print("4. ✅ Explicit package list instead of discovery")
-print("5. ✅ Single-line author format")
-print("6. ✅ No keywords or classifiers")
-print("7. ✅ Absolute minimum required by PyPI")
+[tool.setuptools.packages.find]
+where = ["src"]
