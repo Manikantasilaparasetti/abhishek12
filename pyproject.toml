@@ -10,11 +10,11 @@ readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
     {name = "Adari Abhishek", email = "abhishekadari85@gmail.com"}
-    {name = "Palivela Giridhar", email = "nanipalivela830@gmail.com"}
+  
 ]
 maintainers = [
     {name = "Palivela Giridhar", email = "nanipalivela830@gmail.com"}
-     {name = "Adari Abhishek", email = "abhishekadari85@gmail.com"}
+    
 ]
 keywords = ["deep-learning", "machine-learning", "neural-networks", "tensor", "pytorch-like", "framework"]
 classifiers = [
