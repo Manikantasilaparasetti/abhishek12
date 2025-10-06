@@ -22,9 +22,7 @@ package-dir = {"" = "src"}
 packages = ["mayini", "mayini.nn", "mayini.optim", "mayini.training"]
 '''
 
-print("✅ ULTRA-BASIC pyproject.toml created!")
-print(f"📏 Length: {len(basic_pyproject)} characters")
-print(f"📝 Lines: {len(basic_pyproject.split(chr(10)))}")
+
 
 # Show each line with numbers
 lines = basic_pyproject.split('\n')
