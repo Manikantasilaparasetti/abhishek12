@@ -1,5 +1,4 @@
-# Create corrected nn/__init__.py
-corrected_nn_init = '''"""
+"""
 Neural Network components for MAYINI Deep Learning Framework.
 """
 
@@ -34,7 +33,3 @@ __all__ = [
     # Loss functions
     'MSELoss', 'MAELoss', 'CrossEntropyLoss', 'BCELoss', 'HuberLoss',
 ]
-'''
-
-print("✅ CORRECTED nn/__init__.py created")
-print(f"Length: {len(corrected_nn_init)} characters")
