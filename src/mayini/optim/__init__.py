@@ -1,5 +1,4 @@
-# Create corrected optim/__init__.py
-corrected_optim_init = '''"""
+"""
 Optimization algorithms for MAYINI Deep Learning Framework.
 """
 
@@ -11,7 +10,3 @@ __all__ = [
     'SGD', 'Adam', 'AdamW', 'RMSprop',
     'StepLR', 'ExponentialLR', 'CosineAnnealingLR'
 ]
-'''
-
-print("✅ CORRECTED optim/__init__.py created")
-print(f"Length: {len(corrected_optim_init)} characters")
