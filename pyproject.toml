@@ -48,7 +48,8 @@ examples = [
     "scikit-learn>=1.1.0,<2.0.0"
 ]
 all = [
-    "mayini-framework[dev,examples]"
+    "mayini-framework[dev]",
+    "mayini-framework[examples]"
 ]
 
 [project.urls]
@@ -68,7 +69,6 @@ exclude = ["tests*"]
 [tool.setuptools.package-data]
 mayini = ["py.typed"]
 
-# Development tools configuration
 [tool.black]
 line-length = 88
 target-version = ['py38']
