@@ -1,11 +1,10 @@
-# Create the missing activation functions file
-activations_py_content = '''"""
+"""
 Activation functions for neural networks.
 """
-
 import numpy as np
 from abc import ABC, abstractmethod
 from ..tensor import Tensor
+
 
 class ActivationFunction(ABC):
     """Base class for activation functions."""
@@ -16,6 +15,7 @@ class ActivationFunction(ABC):
     
     def __call__(self, x: Tensor) -> Tensor:
         return self.forward(x)
+
 
 class ReLU(ActivationFunction):
     """Rectified Linear Unit activation function."""
@@ -37,6 +37,7 @@ class ReLU(ActivationFunction):
         out._backward = _backward
         out.prev = {x}
         return out
+
 
 class Sigmoid(ActivationFunction):
     """Sigmoid activation function."""
@@ -63,6 +64,7 @@ class Sigmoid(ActivationFunction):
         out.prev = {x}
         return out
 
+
 class Tanh(ActivationFunction):
     """Hyperbolic tangent activation function."""
     
@@ -85,6 +87,7 @@ class Tanh(ActivationFunction):
         out._backward = _backward
         out.prev = {x}
         return out
+
 
 class Softmax(ActivationFunction):
     """Softmax activation function."""
@@ -118,6 +121,7 @@ class Softmax(ActivationFunction):
         out.prev = {x}
         return out
 
+
 class GELU(ActivationFunction):
     """Gaussian Error Linear Unit activation function."""
     
@@ -147,6 +151,7 @@ class GELU(ActivationFunction):
         out.prev = {x}
         return out
 
+
 class LeakyReLU(ActivationFunction):
     """Leaky ReLU activation function."""
     
@@ -172,39 +177,39 @@ class LeakyReLU(ActivationFunction):
         out.prev = {x}
         return out
 
+
 # Functional interface
 def relu(x: Tensor) -> Tensor:
     """Apply ReLU activation function."""
     return ReLU()(x)
 
+
 def sigmoid(x: Tensor) -> Tensor:
     """Apply Sigmoid activation function."""
     return Sigmoid()(x)
+
 
 def tanh(x: Tensor) -> Tensor:
     """Apply Tanh activation function."""
     return Tanh()(x)
 
+
 def softmax(x: Tensor, dim=-1) -> Tensor:
     """Apply Softmax activation function."""
     return Softmax(dim)(x)
+
 
 def gelu(x: Tensor) -> Tensor:
     """Apply GELU activation function."""
     return GELU()(x)
 
+
 def leaky_relu(x: Tensor, negative_slope=0.01) -> Tensor:
     """Apply Leaky ReLU activation function."""
     return LeakyReLU(negative_slope)(x)
+
 
 __all__ = [
     'ActivationFunction', 'ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'GELU', 'LeakyReLU',
     'relu', 'sigmoid', 'tanh', 'softmax', 'gelu', 'leaky_relu'
 ]
-'''
-
-print("✅ Created missing activations.py")
-print(f"Length: {len(activations_py_content)} characters")
-print("- Complete activation functions with gradients")
-print("- Both class and functional interfaces")
-print("- Numerical stability improvements")
