@@ -2,19 +2,19 @@
 Neural Network components for MAYINI Deep Learning Framework.
 """
 
-# Base classes
+# Base classes from modules.py
 from .modules import Module, Sequential
 
-# Core layers
+# Core layers from modules.py  
 from .modules import Linear, Conv2D, MaxPool2D, AvgPool2D, Dropout, BatchNorm1d, Flatten
 
-# Activation modules
+# Activation modules from activations.py
 from .activations import ReLU, Sigmoid, Tanh, Softmax, GELU, LeakyReLU
 
-# RNN components
+# RNN components from rnn.py
 from .rnn import RNNCell, LSTMCell, GRUCell, RNN
 
-# Loss functions
+# Loss functions from losses.py
 from .losses import MSELoss, MAELoss, CrossEntropyLoss, BCELoss, HuberLoss
 
 __all__ = [
