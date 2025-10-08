@@ -2,14 +2,14 @@
 MAYINI Deep Learning Framework
 A comprehensive deep learning framework built from scratch in Python.
 """
-__version__ = "0.1.4"
+__version__ = "0.2.0"
 __author__ = "Abhishek Adari"
 __email__ = "abhishekadari85@gmail.com"
 
 # Core components
 from .tensor import Tensor
 
-# Neural network modules
+# Neural network modules - FIXED IMPORTS
 from .nn import (
     Module, Sequential,
     Linear, Conv2D, MaxPool2D, AvgPool2D, Dropout, BatchNorm1d, Flatten,
@@ -21,7 +21,7 @@ from .nn import (
 # Optimizers
 from .optim import SGD, Adam, AdamW, RMSprop
 
-# Training utilities   
+# Training utilities 
 from .training import DataLoader, Trainer, Metrics, EarlyStopping
 
 # Activation functions (functional interface)
